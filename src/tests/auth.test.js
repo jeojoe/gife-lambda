@@ -1,6 +1,8 @@
 import * as Auth from '../auth';
 
-test('checkInvitationCode', async (done) => {
+test('checkInvitationCode', (done) => {
+  expect.assertions(2);
+
   const event = {
     body: { code: '000000' },
   };
@@ -11,5 +13,5 @@ test('checkInvitationCode', async (done) => {
     done();
   };
 
-  await Auth.checkInvitationCode(event, context, callback);
+  Auth.checkInvitationCode(event, context, callback);
 });
