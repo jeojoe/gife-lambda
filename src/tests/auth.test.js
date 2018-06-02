@@ -1,12 +1,10 @@
 import * as Auth from '../auth';
+import mockEvent from '../mocks/checkInvitationCode.json';
 
 test('checkInvitationCode', (done) => {
   expect.assertions(2);
 
-  const event = {
-    // Change code to available one
-    pathParameters: { code: '928051' },
-  };
+  const event = mockEvent;
   const context = 'context';
   const callback = (err, response) => {
     expect(err).toBeNull();
