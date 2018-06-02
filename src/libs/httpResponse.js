@@ -9,10 +9,10 @@ function buildResponse(statusCode, body) {
   };
 }
 
-export function success(body = null) {
+export function success(body = {}) {
   return buildResponse(200, body);
 }
 
-export function failure(statusCode = 500, body = null) {
+export function failure(statusCode = 500, body = {}) {
   return buildResponse(statusCode, body);
 }
