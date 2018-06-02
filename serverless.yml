@@ -26,9 +26,9 @@ provider:
   #environment: ${file(env.yml):${self:provider.stage}}
 
 functions:
-  hello:
-    handler: src/handler.hello
+  auth-checkInvitationCode:
+    handler: src/auth.checkInvitationCode
     events:
       - http:
-          path: hello
+          path: auth/invitation
           method: get

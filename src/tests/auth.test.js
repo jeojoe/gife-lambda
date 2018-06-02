@@ -4,7 +4,8 @@ test('checkInvitationCode', (done) => {
   expect.assertions(2);
 
   const event = {
-    body: { code: '000000' },
+    // Change code to available one
+    pathParameters: { code: '928051' },
   };
   const context = 'context';
   const callback = (err, response) => {
