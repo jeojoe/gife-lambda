@@ -17,7 +17,7 @@ export const checkInvitationCode = async (event, context, callback) => {
         // Close conn before ending lambda execution
         await db.end();
         callback(null, failure(400, { msg: 'Invitation code not found!' }));
-      } else if (res.rows[0].is_active !== 0) {
+      } else if (res.rows[0].user_id) {
         await db.end();
         callback(null, failure(400, { msg: 'Invitation code is already used!' }));
       } else {
