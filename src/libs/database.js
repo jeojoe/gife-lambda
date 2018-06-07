@@ -1,6 +1,6 @@
 import { Client } from 'pg';
 import Config from '../../config';
 
-const client = new Client(Config.db);
-
-export default client;
+export function newDbClient() {
+  return new Client(Config.db);
+}

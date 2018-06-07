@@ -35,3 +35,10 @@ functions:
           path: auth/invitation
           method: get
           private: true
+  challenge-getExplore:
+    handler: src/challenge.getExplore
+    events:
+      - http:
+          path: challenge/explore
+          method: get
+          private: true
