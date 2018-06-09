@@ -1,6 +1,54 @@
 import { newDbClient } from './libs/database';
 import { success, failure } from './libs/httpResponse';
 
+export const getChallenge = async (event, context, callback) => {
+  const { challengeId } = event.pathParameters;
+  if (!challengeId) {
+    callback(null, failure(400, { msg: 'Please provide place id!' }));
+    return;
+  }
+
+  const dbClient = newDbClient();
+  try {
+    await dbClient.connect();
+    const res = await dbClient.query(`
+      SELECT
+        challenges.id as id,
+        challenges.created_at as created_at,
+        challenges.updated_at as updated_at,
+        start_date,
+        goal_description,
+        banner_image_url,
+        location_label,
+        rating,
+        reward_gife_points,
+        reward_id,
+        is_spotlight,
+        is_sponsored,
+        minimum_completed,
+        challenges.title as title,
+        challenge_types.title as type_title,
+        challenge_durations.title as duration_title,
+        duration_in_hours
+      FROM challenges
+        INNER JOIN challenge_types
+          ON challenges.challenge_type_id = challenge_types.id
+        INNER JOIN challenge_durations
+          ON challenge_durations.id = challenges.challenge_duration_id
+      WHERE challenges.id = $1
+    `, [challengeId]);
+
+    callback(null, success({
+      challenge: res.rows[0] || null,
+    }));
+  } catch (err) {
+    console.log('Error: getExplore', err);
+    callback(null, failure(500));
+  } finally {
+    await dbClient.end();
+  }
+};
+
 export const getExplore = async (event, context, callback) => {
   const dbClient = newDbClient();
   try {
@@ -55,9 +103,7 @@ export const getExplore = async (event, context, callback) => {
     }));
   } catch (err) {
     console.log('Error: getExplore', err);
-    callback(null, failure(500, {
-      msg: 'Oops, Something went wrong! Please try again',
-    }));
+    callback(err);
   } finally {
     await dbClient.end();
   }

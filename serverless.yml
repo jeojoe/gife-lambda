@@ -42,3 +42,17 @@ functions:
           path: challenge/explore
           method: get
           private: true
+  challenge-getChallenge:
+    handler: src/challenge.getChallenge
+    events:
+      - http:
+          path: challenge/{challengeId}
+          method: get
+          private: true
+  place-getPlace:
+    handler: src/place.getPlace
+    events:
+      - http:
+          path: place/{placeId}
+          method: get
+          private: true
