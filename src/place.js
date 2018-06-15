@@ -13,7 +13,7 @@ export const getPlace = async (event, context, callback) => {
   const dbClient = newDbClient();
   try {
     await dbClient.connect();
-    const res = await dbClient.query(`
+    const resPlace = await dbClient.query(`
       SELECT
         places.id as id,
         places.created_at as created_at,
@@ -41,8 +41,20 @@ export const getPlace = async (event, context, callback) => {
       WHERE places.id = $1
     `, [placeId]);
 
+    const resReviews = await dbClient.query(`
+      SELECT
+        id,
+        title,
+        author_name,
+        site_name,
+        site_url
+      FROM place_external_reviews
+      WHERE place_id = $1
+    `, [placeId]);
+
     callback(null, success({
-      place: res.rows[0] || null,
+      place: resPlace.rows[0] || null,
+      reviews: resReviews.rows[0] ? resReviews.rows : null,
     }));
   } catch (err) {
     console.log('Error: getPlace', err);

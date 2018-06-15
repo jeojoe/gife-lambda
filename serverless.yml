@@ -35,6 +35,13 @@ functions:
           path: auth/invitation
           method: get
           private: true
+  auth-loginOAuth:
+    handler: src/auth.loginOAuth
+    events:
+      - http:
+          path: auth/login/oauth
+          method: post
+          private: true
   challenge-getExplore:
     handler: src/challenge.getExplore
     events:

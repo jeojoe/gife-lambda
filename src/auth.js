@@ -1,15 +1,17 @@
-import db from './libs/database';
+import { newDbClient } from './libs/database';
+// import firebase from './libs/firebase';
 import { success, failure } from './libs/httpResponse';
 
 export const checkInvitationCode = async (event, context, callback) => {
   if (event.queryStringParameters && event.queryStringParameters.code) {
     const { code } = event.queryStringParameters;
     // Check if invitation code exists in db
+    const db = newDbClient();
     try {
       await db.connect();
       const res = await db.query(
         `SELECT * FROM user_invitation
-        WHERE user_invitation.code = $1`,
+        WHERE code = $1`,
         [code],
       );
       // No code -> has code but used -> available
@@ -17,14 +19,14 @@ export const checkInvitationCode = async (event, context, callback) => {
         // Close conn before ending lambda execution
         await db.end();
         callback(null, failure(400, { msg: 'Invitation code not found!' }));
-      } else if (res.rows[0].user_id) {
+      } else if (res.rows[0].is_used) {
         await db.end();
         callback(null, failure(400, { msg: 'Invitation code is already used!' }));
       } else {
         await db.query(`
-          UPDATE user_invitation SET is_active = 1
-          WHERE id = '${res.rows[0].id}'
-        `);
+          UPDATE user_invitation SET is_used = true
+          WHERE id = $1
+        `, [res.rows[0].id]);
         await db.end();
         callback(null, success());
       }
@@ -33,5 +35,39 @@ export const checkInvitationCode = async (event, context, callback) => {
     }
   } else {
     callback(null, failure(400, { msg: 'No invitation code provided!' }));
+  }
+};
+
+export const loginOAuth = async (event, context, callback) => {
+  const dbClient = newDbClient();
+  console.log(event);
+  try {
+    const { token, temp } = JSON.parse(event.body); // Temp uid
+    if (!token) {
+      callback(null, failure(400, {
+        msg: 'Please provide required credentials',
+      }));
+    }
+    await dbClient.connect();
+    // const { uid } = await firebase.auth().verifyIdToken(token);
+    const { uid } = temp;
+    const res = await dbClient.query(`
+      SELECT exists(SELECT 1 FROM users WHERE id = $1)
+    `, [uid]);
+    // If not exist -> insert new user
+    if (!res.rows[0].exists) {
+      await dbClient.query(`
+        INSERT INTO users (id, username)
+          VALUES ($1, $1)
+      `, [uid]);
+    }
+    callback(null, success());
+  } catch (err) {
+    console.log(err);
+    callback(null, failure(400, {
+      msg: 'Invalid token',
+    }));
+  } finally {
+    await dbClient.end();
   }
 };
