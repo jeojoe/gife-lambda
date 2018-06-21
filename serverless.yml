@@ -56,6 +56,20 @@ functions:
           path: challenge/{challengeId}
           method: get
           private: true
+  challenge-startChallenge:
+    handler: src/challenge.startChallenge
+    events:
+      - http:
+          path: challenge/start
+          method: post
+          private: true
+  challenge-test:
+    handler: src/challenge.test
+    events:
+      - http:
+          path: challenge/test
+          method: get
+          private: true
   place-getPlace:
     handler: src/place.getPlace
     events:
@@ -63,3 +77,4 @@ functions:
           path: place/{placeId}
           method: get
           private: true
+          

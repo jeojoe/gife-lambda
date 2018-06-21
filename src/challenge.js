@@ -1,4 +1,5 @@
 import { newDbClient } from './libs/database';
+// import firebase from './libs/firebase';
 import { success, failure } from './libs/httpResponse';
 
 export const getChallenge = async (event, context, callback) => {
@@ -146,4 +147,61 @@ export const getExplore = async (event, context, callback) => {
   } finally {
     await dbClient.end();
   }
+};
+
+export const startChallenge = async (event, context, callback) => {
+  const { token, temp, challengeId } = event.queryStringParameters;
+  // Connect with database
+  const db = newDbClient();
+  try {
+    await db.connect();
+    // const { uid } = await firebase.auth().verifyIdToken(token);
+    const { uid } = temp;
+    
+    // Check if challenge is already started!
+    const hasChallenge  = await db.query(`
+      SELECT * FROM user_challenges 
+      WHERE challenge_id = $1 
+        AND user_id = $2
+      `, [challengeId, uid]);
+
+    // No rows -> lets start challenge!
+    if(!hasChallenge.rows.length) {
+      // Insert challenge
+      console.log('in if !!!');
+      const challenge = await db.query(`
+        INSERT INTO user_challenges(challenge_id, user_id) 
+        VALUES($1, $2)
+        RETURNING id
+      `, [challengeId, uid]);
+
+      // Get places in challenge
+      const places = await db.query(`
+        SELECT * FROM challenge_places
+        WHERE challenge_id = $1
+      `, [challengeId]);
+
+      // Insert places in challenge
+      places.rows.forEach(async element => {
+        await db.query(`
+          INSERT INTO user_challenge_places(challenge_id, place_id) 
+          VALUES($1, $2)
+        `, [challenge.rows[0].id, element.place_id]);
+      });
+      console.log('HIIII');
+      await db.end();
+      callback(null, success());
+    } else { // Have rows -> challenge already started!
+      await db.end();
+      callback(null, failure(400, { msg: 'Challenge is already started!' }));
+    }   
+  } catch (err) {
+      console.log('Error: startChallenge', err);
+      await db.end();
+      callback(null, failure(500, { msg: 'Internal server error! Please try again' }));
+  }
+};
+
+export const test = (event, context, callback) => {
+  callback(null, 'Hi');
 };
