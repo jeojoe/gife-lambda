@@ -157,18 +157,17 @@ export const startChallenge = async (event, context, callback) => {
     await db.connect();
     // const { uid } = await firebase.auth().verifyIdToken(token);
     const { uid } = temp;
-    
+
     // Check if challenge is already started!
-    const hasChallenge  = await db.query(`
+    const hasChallenge = await db.query(`
       SELECT * FROM user_challenges 
       WHERE challenge_id = $1 
         AND user_id = $2
       `, [challengeId, uid]);
 
     // No rows -> lets start challenge!
-    if(!hasChallenge.rows.length) {
+    if (!hasChallenge.rows.length) {
       // Insert challenge
-      console.log('in if !!!');
       const challenge = await db.query(`
         INSERT INTO user_challenges(challenge_id, user_id) 
         VALUES($1, $2)
@@ -182,23 +181,34 @@ export const startChallenge = async (event, context, callback) => {
       `, [challengeId]);
 
       // Insert places in challenge
-      places.rows.forEach(async element => {
+      for (const place of places.rows) {
         await db.query(`
-          INSERT INTO user_challenge_places(challenge_id, place_id) 
+          INSERT INTO user_challenge_places(user_challenge_id, place_id) 
           VALUES($1, $2)
-        `, [challenge.rows[0].id, element.place_id]);
-      });
-      console.log('HIIII');
+          RETURNING id
+      `, [challenge.rows[0].id, place.place_id]);
+      }
+
+      // places.rows.forEach(async (element) => {
+      //   console.log(element.place_id);
+      //   const test = await db.query(`
+      //     INSERT INTO user_challenge_places(user_challenge_id, place_id)
+      //     VALUES($1, $2)
+      //     RETURNING id
+      //   `, [challenge.rows[0].id, element.place_id]);
+      //   console.log(test);
+      // });
+
       await db.end();
       callback(null, success());
     } else { // Have rows -> challenge already started!
       await db.end();
       callback(null, failure(400, { msg: 'Challenge is already started!' }));
-    }   
+    }
   } catch (err) {
-      console.log('Error: startChallenge', err);
-      await db.end();
-      callback(null, failure(500, { msg: 'Internal server error! Please try again' }));
+    console.log('Error: startChallenge', err);
+    await db.end();
+    callback(null, failure(500, { msg: 'Internal server error! Please try again' }));
   }
 };
 
