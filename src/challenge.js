@@ -150,18 +150,25 @@ export const getExplore = async (event, context, callback) => {
 };
 
 export const startChallenge = async (event, context, callback) => {
-  const { token, temp, challengeId } = event.queryStringParameters;
   // Connect with database
   const db = newDbClient();
   try {
+    const { challengeId, token, temp } = JSON.parse(event.body);
+    if (!token && challengeId) {
+      callback(null, failure(400, {
+        msg: 'Please provide required data',
+      }));
+      return;
+    }
+
     await db.connect();
     // const { uid } = await firebase.auth().verifyIdToken(token);
     const { uid } = temp;
 
     // Check if challenge is already started!
     const hasChallenge = await db.query(`
-      SELECT * FROM user_challenges 
-      WHERE challenge_id = $1 
+      SELECT * FROM user_challenges
+      WHERE challenge_id = $1
         AND user_id = $2
       `, [challengeId, uid]);
 
@@ -169,7 +176,7 @@ export const startChallenge = async (event, context, callback) => {
     if (!hasChallenge.rows.length) {
       // Insert challenge
       const challenge = await db.query(`
-        INSERT INTO user_challenges(challenge_id, user_id) 
+        INSERT INTO user_challenges(challenge_id, user_id)
         VALUES($1, $2)
         RETURNING id
       `, [challengeId, uid]);
@@ -181,14 +188,15 @@ export const startChallenge = async (event, context, callback) => {
       `, [challengeId]);
 
       // Insert places in challenge
-      for (const place of places.rows) {
-        await db.query(`
-          INSERT INTO user_challenge_places(user_challenge_id, place_id) 
-          VALUES($1, $2)
-          RETURNING id
-      `, [challenge.rows[0].id, place.place_id]);
-      }
+      const insertPromises = places.rows.map(place => (
+        db.query(`
+            INSERT INTO user_challenge_places(user_challenge_id, place_id)
+            VALUES($1, $2)
+            RETURNING id
+        `, [challenge.rows[0].id, place.place_id])
+      ));
 
+      await Promise.all(insertPromises);
       // places.rows.forEach(async (element) => {
       //   console.log(element.place_id);
       //   const test = await db.query(`

@@ -40,13 +40,13 @@ export const checkInvitationCode = async (event, context, callback) => {
 
 export const loginOAuth = async (event, context, callback) => {
   const dbClient = newDbClient();
-  console.log(event);
   try {
     const { token, temp } = JSON.parse(event.body); // Temp uid
     if (!token) {
       callback(null, failure(400, {
         msg: 'Please provide required credentials',
       }));
+      return;
     }
     await dbClient.connect();
     // const { uid } = await firebase.auth().verifyIdToken(token);

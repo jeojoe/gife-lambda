@@ -1,5 +1,5 @@
 {
-  "queryStringParameters": {
+  "body": {
     "challengeId" : "2a2d36e2-7364-11e8-afde-0b0876a1ad1b",
     "token" : "0000",
     "temp" : {
