@@ -95,7 +95,12 @@ export const getExplore = async (event, context, callback) => {
     // Query spotlight & types
     const [spotlightResult, typesResult] = await dbClient.query(`
       -- Get spotlight --
-      SELECT * FROM challenges WHERE is_spotlight = true;
+      SELECT *
+      FROM challenges
+        INNER JOIN challenge_durations
+          ON challenge_durations.id = challenges.challenge_duration_id
+      WHERE is_spotlight = true
+      ;
       -- Get types
       SELECT * FROM challenge_types;
     `);
@@ -197,15 +202,6 @@ export const startChallenge = async (event, context, callback) => {
       ));
 
       await Promise.all(insertPromises);
-      // places.rows.forEach(async (element) => {
-      //   console.log(element.place_id);
-      //   const test = await db.query(`
-      //     INSERT INTO user_challenge_places(user_challenge_id, place_id)
-      //     VALUES($1, $2)
-      //     RETURNING id
-      //   `, [challenge.rows[0].id, element.place_id]);
-      //   console.log(test);
-      // });
 
       await db.end();
       callback(null, success());
